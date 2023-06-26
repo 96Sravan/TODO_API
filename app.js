@@ -1,11 +1,10 @@
 const express = require("express");
 const path = require("path");
 const { open } = require("sqlite");
-const isValid = require("date-fns/isValid");
-const format = require("date-fns/format");
-
 const sqlite3 = require("sqlite3");
 
+const isValid = require("date-fns/isValid");
+const format = require("date-fns/format");
 
 const app = express();
 app.use(express.json());
@@ -30,6 +29,12 @@ const initializeServerAndDb = async () => {
   }
 };
 initializeServerAndDb();
+
+/// Values
+
+const priorityValues = [`HIGH`, `MEDIUM`, `LOW`];
+const statusValues = [`TO DO`, `IN PROGRESS`, `DONE`];
+const categoryValues = [`WORK`, `HOME`, `LEARNING`];
 
 const statusCheckScenario = (query) => {
   return query.status !== undefined;
@@ -235,7 +240,7 @@ app.get("/todos/", async (request, response) => {
         );
       } else {
         response.status(400);
-        response.send("Invalid Todo Status");
+        response.send("Invalid Todo Priority");
       }
       break;
 
@@ -290,9 +295,9 @@ app.get("/todos/:todoId/", async (request, response) => {
 
 app.get("/agenda/", async (request, response) => {
   const { date } = request.query;
-  const newDate = format(new Date(date), "yyyy-MM-dd");
 
-  if (isValid(new Date(newDate))) {
+  if (isValid(new Date(date))) {
+    const newDate = format(new Date(date), "yyyy-MM-dd");
     const gettingDataThroughDate = `
         SELECT
             *
@@ -316,21 +321,42 @@ app.get("/agenda/", async (request, response) => {
 
 app.post("/todos/", async (request, response) => {
   const { id, todo, priority, status, category, dueDate } = request.body;
-  const enterNewDataToDbQuery = `
-    INSERT INTO
-        todo(id, todo, priority, status, category, due_date)
-    VALUES
-    (
-        ${id},
-        '${todo}',
-        '${priority}',
-        '${status}',
-        '${category}',
-        '${dueDate}'
-    );
-  `;
-  const dbResponse = await db.run(enterNewDataToDbQuery);
-  response.send("Todo Successfully Added");
+
+  if (priorityValues.includes(priority)) {
+    if (statusValues.includes(status)) {
+      if (categoryValues.includes(category)) {
+        if (isValid(new Date(dueDate))) {
+          const enterNewDataToDbQuery = `
+                INSERT INTO
+                     todo(id, todo, priority, status, category, due_date)
+                VALUES
+                    (
+                        ${id},
+                        '${todo}',
+                        '${priority}',
+                        '${status}',
+                        '${category}',
+                        '${dueDate}'
+                    );
+                `;
+          const dbResponse = await db.run(enterNewDataToDbQuery);
+          response.send("Todo Successfully Added");
+        } else {
+          response.status(400);
+          response.send("Invalid Due Date");
+        }
+      } else {
+        response.status(400);
+        response.send("Invalid Todo Category");
+      }
+    } else {
+      response.status(400);
+      response.send("Invalid Todo Status");
+    }
+  } else {
+    response.status(400);
+    response.send("Invalid Todo Priority");
+  }
 });
 
 ///API 5
@@ -360,22 +386,28 @@ app.put("/todos/:todoId/", async (request, response) => {
     /// SCENARIO : 2
 
     case priority !== undefined:
-      const updatePriorityQuery = `
+      if (priorityValues.includes(priority)) {
+        const updatePriorityQuery = `
             UPDATE
                 todo
             SET
                 priority = '${priority}'
             WHERE
                 id = ${todoId};
-          `;
-      dbResponse = await db.run(updatePriorityQuery);
-      response.send("Priority Updated");
+            `;
+        dbResponse = await db.run(updatePriorityQuery);
+        response.send("Priority Updated");
+      } else {
+        response.status(400);
+        response.send("Invalid Todo Priority");
+      }
+
       break;
 
     /// SCENARIO : 3
-
     case status !== undefined:
-      const updateStatusQuery = `
+      if (statusValues.includes(status)) {
+        const updateStatusQuery = `
             UPDATE
                 todo
             SET
@@ -383,14 +415,20 @@ app.put("/todos/:todoId/", async (request, response) => {
             WHERE
                 id = ${todoId};
           `;
-      dbResponse = await db.run(updateStatusQuery);
-      response.send("Status Updated");
+        dbResponse = await db.run(updateStatusQuery);
+        response.send("Status Updated");
+      } else {
+        response.status(400);
+        response.send("Invalid Todo Status");
+      }
+
       break;
 
     /// SCENARIO : 4
 
     case category !== undefined:
-      const updateCategoryQuery = `
+      if (categoryValues.includes(category)) {
+        const updateCategoryQuery = `
             UPDATE
                 todo
             SET
@@ -398,14 +436,20 @@ app.put("/todos/:todoId/", async (request, response) => {
             WHERE
                 id = ${todoId};
           `;
-      dbResponse = await db.run(updateCategoryQuery);
-      response.send("Category Updated");
+        dbResponse = await db.run(updateCategoryQuery);
+        response.send("Category Updated");
+      } else {
+        response.status(400);
+        response.send("Invalid Todo Category");
+      }
+
       break;
 
     /// SCENARIO : 5
 
     case dueDate !== undefined:
-      const updateDueDateQuery = `
+      if (isValid(new Date(dueDate))) {
+        const updateDueDateQuery = `
             UPDATE
                 todo
             SET
@@ -413,8 +457,12 @@ app.put("/todos/:todoId/", async (request, response) => {
             WHERE
                 id = ${todoId};
           `;
-      dbResponse = await db.run(updateDueDateQuery);
-      response.send("Due Date Updated");
+        dbResponse = await db.run(updateDueDateQuery);
+        response.send("Due Date Updated");
+      } else {
+        response.status(400);
+        response.send("Invalid Due Date");
+      }
       break;
   }
 });
