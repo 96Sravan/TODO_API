@@ -303,16 +303,136 @@ app.get("/agenda/", async (request, response) => {
             due_date = '${newDate}';
       `;
     const dbResponse = await db.all(gettingDataThroughDate);
-    if (dbResponse === {}) {
-      response.status(400);
-      response.send("Invalid Due Date");
-    } else {
-      response.send(
-        dbResponse.map((eachTodo) => snakeToCamelConversion(eachTodo))
-      );
-    }
+    response.send(
+      dbResponse.map((eachTodo) => snakeToCamelConversion(eachTodo))
+    );
   } else {
     response.status(400);
     response.send("Invalid Due Date");
   }
 });
+
+///API 4
+/// Posting to database
+
+app.post("/todos/", async (request, response) => {
+  const { id, todo, priority, status, category, dueDate } = request.body;
+  const enterNewDataToDbQuery = `
+    INSERT INTO
+        todo(id, todo, priority, status, category, due_date)
+    VALUES
+    (
+        ${id},
+        '${todo}',
+        '${priority}',
+        '${status}',
+        '${category}',
+        '${dueDate}'
+    );
+  `;
+  const dbResponse = await db.run(enterNewDataToDbQuery);
+  response.send("Todo Successfully Added");
+});
+
+///API 5
+/// Updating todo details
+
+app.put("/todos/:todoId/", async (request, response) => {
+  const { todoId } = request.params;
+  const { todo, priority, status, category, dueDate } = request.body;
+  let dbResponse;
+
+  switch (true) {
+    /// SCENARIO : 1
+
+    case todo !== undefined:
+      const updateTodoQuery = `
+            UPDATE
+                todo
+            SET
+                todo = '${todo}'
+            WHERE
+                id = ${todoId};
+          `;
+      dbResponse = await db.run(updateTodoQuery);
+      response.send("Todo Updated");
+      break;
+
+    /// SCENARIO : 2
+
+    case priority !== undefined:
+      const updatePriorityQuery = `
+            UPDATE
+                todo
+            SET
+                priority = '${priority}'
+            WHERE
+                id = ${todoId};
+          `;
+      dbResponse = await db.run(updatePriorityQuery);
+      response.send("Priority Updated");
+      break;
+
+    /// SCENARIO : 3
+
+    case status !== undefined:
+      const updateStatusQuery = `
+            UPDATE
+                todo
+            SET
+                status = '${status}'
+            WHERE
+                id = ${todoId};
+          `;
+      dbResponse = await db.run(updateStatusQuery);
+      response.send("Status Updated");
+      break;
+
+    /// SCENARIO : 4
+
+    case category !== undefined:
+      const updateCategoryQuery = `
+            UPDATE
+                todo
+            SET
+                category = '${category}'
+            WHERE
+                id = ${todoId};
+          `;
+      dbResponse = await db.run(updateCategoryQuery);
+      response.send("Category Updated");
+      break;
+
+    /// SCENARIO : 5
+
+    case dueDate !== undefined:
+      const updateDueDateQuery = `
+            UPDATE
+                todo
+            SET
+                due_date = '${dueDate}'
+            WHERE
+                id = ${todoId};
+          `;
+      dbResponse = await db.run(updateDueDateQuery);
+      response.send("Due Date Updated");
+      break;
+  }
+});
+
+///API 6
+/// Removing Todo from DB
+
+app.delete("/todos/:todoId/", async (request, response) => {
+  const { todoId } = request.params;
+  const deletingTodoFromDbQuery = `
+    DELETE FROM
+        todo
+    WHERE
+        id = ${todoId};
+    `;
+  const dbResponse = await db.run(deletingTodoFromDbQuery);
+  response.send("Todo Deleted");
+});
+
+module.exports = app;
