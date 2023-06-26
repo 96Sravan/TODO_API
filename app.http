@@ -38,7 +38,7 @@ GET http://localhost:3000/todos/?category=LEARNIG&priority=HIGH
 /// API 2
 /// Getting data by using ID
 
-GET http://localhost:3000/todos/2/
+GET http://localhost:3000/todos/8/
 ###
 
 /// API 3
