@@ -1,0 +1,48 @@
+/// GET API
+
+/// SCENARIO : 1
+GET http://localhost:3000/todos/?status=TO%20DO
+###
+
+/// SCENARIO : 2
+
+GET http://localhost:3000/todos/?priority=HIGH
+###
+
+////// SCENARIO : 3
+
+GET http://localhost:3000/todos/?priority=HIGH&status=IN%20PROGRESS
+###
+
+/// SCENARIO : 4
+
+GET http://localhost:3000/todos/?search_q=Buy
+###
+
+///SCENARIO : 5
+
+GET http://localhost:3000/todos/?category=WORK&status=DONE
+###
+
+///SCENARIO : 6
+
+GET http://localhost:3000/todos/?category=HOME
+###
+
+/// SCENARIO : 7
+
+GET http://localhost:3000/todos/?category=LEARNIG&priority=HIGH
+###
+
+
+/// API 2
+/// Getting data by using ID
+
+GET http://localhost:3000/todos/2/
+###
+
+/// API 3
+///A specific due date
+
+GET http://localhost:3000/agenda/?date=2021-12-12
+###
